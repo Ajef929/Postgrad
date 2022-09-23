@@ -1,0 +1,133 @@
+---
+title: "Assignment4-Question2"
+author: "AlexanderJefferies"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r }
+library(qicharts2)
+library(dplyr)
+data <- read.csv("monitor.csv")
+
+data$Timestamp <- as.POSIXct(data$Timestamp,format='%Y-%m-%d %H:%M:%OS')
+
+##adding a day of year column ot
+s_1 <- as.Date(data$Timestamp,format='%Y-%m-%d')
+data$DayOfYear <- lubridate::yday(s_1)
+
+
+head(data) 
+
+
+```
+
+### Memory Usage
+
+a)  Is the memory usage of the server in control?
+
+See results of an xbar chart for memory usage below:
+
+```{r}
+control_set <- 40 ##40 day period to gauge in control values
+
+##testing for means in control
+p1 <- qicharts2::qic(x = DayOfYear, y = ProcessMemory, data = data, freeze=control_set,chart = "xbar", subtitle = "Process Memory")
+plot(p1)
+
+summary(p1)
+  #select(runs.signal, sigma.signal)
+
+```
+
+Memory Usage means are out of control as 9 points fall beyond the control limits. Firstly, to confirm this, the longest run has a value of 19 compared with a max.longest.run of 10 and secondly, there are 39 crossings compared with a min crossings of 51. Additionally, small shifts from the average and are seen in the graph from subgroup 130 onward ( 7 or more consecutive points on one side of the average). Therefore, the means of memory usage are out of control.
+
+Below, see the results of variability for process memory:
+
+```{r,fig.height=6}
+##testing for variability in control
+p <- qicharts2::qic(x = DayOfYear, y = ProcessMemory, data = data, chart = "s", subtitle = "ProcessMemory", freeze = control_set)
+plot(p)
+summary(p)
+```
+
+At first glance the variability of process memory looks to be under control because only one point is outside the control limits. Thus, one large shift from the average exists. Furthermore, the longest run value of 7 being smaller than the longest max value of 10 suggests that the the process is in control. Similarly, the n.crossings value of 55 is greater than the in control minimum n.crossings value of 51. Therefore, variability for Process Memory could be seen as in control.
+
+As a whole, the Process Memory is out of control. The next steps will be to investigate the issue on the server side.
+
+### Prediction time
+
+**b. Is the time for model predictions out of control?**
+
+See results for an xbar chart on Prediction Time below:
+
+```{r}
+##testing if process means are  in control
+
+p <- qicharts2::qic(x = DayOfYear, y = PredictionTimeMS, data = data, freeze=control_set,chart = "xbar", subtitle = "PredictionTimeMS")
+plot(p)
+summary(p)
+
+
+
+
+```
+
+Prediction time means look to be in control at first glance, with no point outside the control limit. n.crossings at 66 sits over n.crossings.min at 51 and a longest.run of 6 sits under longest.run.max at 10. Both of these are good indicators of a process being in control.
+
+Below see the results of anSchart for Prediction Time variability:
+
+```{r}
+##testing if process variability is in control
+p <- qicharts2::qic(x = DayOfYear, y = PredictionTimeMS, data = data, chart = "s", subtitle = "PredictionTimeMS", freeze = control_set)
+plot(p)
+summary(p)
+```
+
+Prediction time variability is out of control with 9 points sitting outside the control limit and a runs signal of 1. Additionally, we see consistent near violation of the limit (4 out of 5 consecutive points greater than 2 standard deviations from the center line) from the subgroup 80 onward, another indicator of a process being out of control.
+
+The process having variability out of control renders the whole Prediction time process out of control.
+
+### Prediction
+
+**c. Do model predictions fall out of control?**
+
+The following details the results of an xbar chart for Predictions:
+
+```{r}
+p <- qicharts2::qic(x = DayOfYear, y = Prediction, data = data, freeze=control_set,chart = "xbar", subtitle = "Prediction")
+plot(p)
+summary(p)
+```
+
+The means appear to be slightly out of control. However, the few points outside the control limit could be considered as outliers. The only issues captured are small shifts from the average (7 or more consecutive points on one side of the center line). These will be tolerated. Therefore, the means for Predictions are marginally in control.
+
+Below, see results of anSchart for Prediction:
+
+```{r}
+p <- qicharts2::qic(x = DayOfYear, y = Prediction, data = data, chart = "s", subtitle = "Prediction", freeze = control_set)
+plot(p)
+summary(p)
+
+
+```
+
+Variability for prediction values appears to be in control. There are no points outside the control limits. Nor are moderate or small shifts to the mean captured in the chart.
+
+Overall, prediction values are in control.
+
+### Summary
+
+Here a summary of overall results is presented. Two of the three processes are out of control and one is in control.
+
+| Measurement     | Xbar Breaches | Xbar runs signal | S Breaches | S runs signal | Overall        |
+|------------|------------|------------|------------|------------|------------|
+| Memory Usage    | 1             | 9                | 0          | 1             | Out of control |
+| Prediction Time | 0             | 0                | 1          | 9             | Out of control |
+| Predictions     | 1             | 4                | 0          | 1             | In control     |
+
+: Results
